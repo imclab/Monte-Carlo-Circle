@@ -75,7 +75,8 @@
 			var data = [],
 				average = [],
 				piData = [],
-				timer;
+				timer,
+				running = false;
 			function calculateRatio(times) {
 				var i, inside, outside, x, y, _i;
 				inside = [];
@@ -143,12 +144,13 @@
 				plot.draw();
 			}
 			function start() {
+				running = true;
 				timer = setInterval(function(){ update(1) }, 30);
 			}
 			function stop() {
+				running = false;
 				window.clearInterval(timer);
 			}
-
 			piData = getPi();
 			for(var i = data.length; i < 300; i++) {
 				generate();
@@ -165,6 +167,23 @@
 					show: false
 				}
 			});
+			function getKeyCode(event) {
+				event = event || window.event;
+				return event.keyCode;
+			}
+			window.onkeydown = function(event){
+				if (event.keyCode == 32) {
+					if (running) {
+						stop();
+					} else {
+						start();
+					}
+				} else if (event.keyCode == 13) {
+					reset();
+				} else if (event.keyCode == 39) {
+					update(10);
+				}
+			};
 		</script>
 	</body>
 </html>
