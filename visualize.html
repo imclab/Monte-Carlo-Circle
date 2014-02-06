@@ -61,9 +61,16 @@
 		<div class="text">
 			<a href="javascript:start()">Play</a>
 			<a href="javascript:stop()">Stop</a>
+			<a href="javascript:back(10)">-10</a>
+			<a href="javascript:back(1)">-1</a>
 			<a href="javascript:update(1)">+1</a>
 			<a href="javascript:update(10)">+10</a>
 			<a href="javascript:reset()">Reset</a>
+		</div>
+		<div class="text">
+			<a href="javascript:zoomOut()">Zoom Out</a>
+			<a href="javascript:perspective(1)">Default</a>
+			<a href="javascript:zoomIn()">Zoom In</a>
 		</div>
 		<div class="text output">
 			Averaged PI: <span id="average"></span><br>
@@ -73,9 +80,11 @@
 
 		<script>
 			var data = [],
+				range,
 				average = [],
 				piData = [],
 				timer,
+				plot,
 				running = false;
 			function calculateRatio(times) {
 				var i, inside, outside, x, y, _i;
@@ -133,7 +142,38 @@
 				for(var i = data.length; i < 300; i++) {
 					generate();
 				}
-				plot.setData([convertData(data), piData, convertData(average) ]);
+				perspective(1);
+			}
+			function perspective(r) {
+				range = parseFloat(r);
+				plot = $.plot("#canvas", [ convertData(data), piData, convertData(average) ], {
+					series: {
+						shadowSize: 0
+					},
+					yaxis: {
+						min: Math.PI - range,
+						max: Math.PI + range
+					},
+					xaxis: {
+						show: false
+					}
+				});
+			}
+			function zoomIn() {
+				perspective(range * 0.5);
+			}
+			function zoomOut() {
+				perspective(range * 2);
+			}
+			function back(input) {
+				if (data.length - input < 300) {
+					data = data.slice(0,299);
+					average = average.slice(0,299);
+				} else {
+					data = data.slice(0,(data.length - 1) - input);
+					average = average.slice(0,(average.length - 1) - input);
+				}
+				plot.setData([ convertData(data), piData, convertData(average) ]);
 				plot.draw();
 			}
 			function update(input) {
@@ -155,22 +195,7 @@
 			for(var i = data.length; i < 300; i++) {
 				generate();
 			}
-			var plot = $.plot("#canvas", [ convertData(data), piData, convertData(average) ], {
-				series: {
-					shadowSize: 0
-				},
-				yaxis: {
-					min: 2,
-					max: 4
-				},
-				xaxis: {
-					show: false
-				}
-			});
-			function getKeyCode(event) {
-				event = event || window.event;
-				return event.keyCode;
-			}
+			perspective(1);
 			window.onkeydown = function(event){
 				if (event.keyCode == 32) {
 					if (running) {
@@ -182,6 +207,8 @@
 					reset();
 				} else if (event.keyCode == 39) {
 					update(10);
+				} else if (event.keyCode == 37) {
+					back(10);
 				}
 			};
 		</script>
