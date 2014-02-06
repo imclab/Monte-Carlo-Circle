@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Monte Carlo</title>
+		<script src="visualize/jquery.js"></script>
+		<script src="visualize/jquery.flot.js"></script>
+
+		<meta name="viewport" content="initial-scale=1, user-scalable=no">
+
+		<style>
+			body {
+				font-family: 'Helvetica'
+			}
+
+			.container {
+				box-sizing: border-box;
+				width: 1200px;
+				padding: 20px 15px 15px 15px;
+				margin: 15px auto 30px auto;
+				border: 1px solid #ddd;
+				background: #fff;
+				background: linear-gradient(#f6f6f6 0, #fff 50px);
+				background: -o-linear-gradient(#f6f6f6 0, #fff 50px);
+				background: -ms-linear-gradient(#f6f6f6 0, #fff 50px);
+				background: -moz-linear-gradient(#f6f6f6 0, #fff 50px);
+				background: -webkit-linear-gradient(#f6f6f6 0, #fff 50px);
+				box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+				-o-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+				-ms-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+				-moz-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+				-webkit-box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+			}
+
+			.text {
+				width: 1200px;
+				margin: 15px auto 30px auto;
+			}
+
+			.output {
+				font-size: 16px;
+			}
+
+			.canvas {
+				width: 100%;
+				height: 600px;
+				font-size: 14px;
+				line-height: 1.2em;
+			}
+
+			a {
+				margin-top: 5px;
+				margin-right: 20px;
+				color: #333;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div id="canvas" class="canvas"></div>
+		</div>
+		<div class="text">
+			<a href="javascript:start()">Play</a>
+			<a href="javascript:stop()">Stop</a>
+			<a href="javascript:update(1)">+1</a>
+			<a href="javascript:update(10)">+10</a>
+			<a href="javascript:reset()">Reset</a>
+		</div>
+		<div class="text output">
+			Averaged PI: <span id="average"></span><br>
+			Accuracy: <span id="accuracy"></span><br>
+			Steps: <span id="steps"></span>
+		</div>
+
+		<script>
+			var data = [],
+				average = [],
+				piData = [],
+				timer;
+			function calculateRatio(times) {
+				var i, inside, outside, x, y, _i;
+				inside = [];
+				outside = [];
+				for (i = _i = 1; 1 <= times ? _i <= times : _i >= times; i = 1 <= times ? ++_i : --_i) {
+					x = Math.random();
+					y = Math.random();
+					if (Math.sqrt((Math.pow(x, 2)) + (Math.pow(y, 2)) <= 1)) {
+						inside.push([x, y]);
+					} else {
+						outside.push([x, y]);
+					}
+				}
+				return inside.length / times;
+			}
+			function output() {
+				$('#average').html(average[average.length - 1]);
+				var percent = ((Math.PI / average[average.length - 1]));
+				if (percent > 1) {
+					percent = 1 + (1 - percent);
+				}
+				$('#accuracy').html((percent * 100).toString() + "%");
+				$('#steps').html(average.length);
+			}
+			function generate() {
+				data.push(4 * calculateRatio(data.length + 1));
+				var temp = 0;
+				for(var i = 0; i < data.length; i++) {
+					temp += data[i];
+				}
+				average.push(temp / data.length);
+				output();
+			}
+			function convertData(input) {
+				var temp = input.slice(-300),
+					res = [];
+				for(var z = 0; z < temp.length; z++) {
+					res.push([z,temp[z]]);
+				}
+				return res;
+			}
+			function getPi() {
+				var res = [];
+				for(var i = 0; i < 300; i++) {
+					res.push([i, Math.PI]);
+				}
+				return res;
+			}
+			function reset() {
+				stop();
+				piData = getPi();
+				data = [];
+				average = [];
+				for(var i = data.length; i < 300; i++) {
+					generate();
+				}
+				plot.setData([convertData(data), piData, convertData(average) ]);
+				plot.draw();
+			}
+			function update(input) {
+				for(var i = 0; i < input; i++) {
+					generate();
+				}
+				plot.setData([ convertData(data), piData, convertData(average) ]);
+				plot.draw();
+			}
+			function start() {
+				timer = setInterval(function(){ update(1) }, 30);
+			}
+			function stop() {
+				window.clearInterval(timer);
+			}
+
+			piData = getPi();
+			for(var i = data.length; i < 300; i++) {
+				generate();
+			}
+			var plot = $.plot("#canvas", [ convertData(data), piData, convertData(average) ], {
+				series: {
+					shadowSize: 0
+				},
+				yaxis: {
+					min: 2,
+					max: 4
+				},
+				xaxis: {
+					show: false
+				}
+			});
+		</script>
+	</body>
+</html>
